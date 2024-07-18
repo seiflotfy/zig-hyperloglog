@@ -15,9 +15,7 @@ fn alpha(comptime p: u8) f64 {
     }
 }
 
-pub fn DefaultHyperLogLog() type {
-    return HyperLogLog(14);
-}
+const DefaultHyperLogLog = HyperLogLog(14);
 
 pub fn HyperLogLog(comptime p: u8) type {
     // check limits if p < 4 or p > 18 return error
