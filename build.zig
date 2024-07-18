@@ -1,17 +1,27 @@
 const std = @import("std");
 
-pub fn build(b: *std.build.Builder) void {
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+    const root_source_file = b.path("src/main.zig");
 
-    const lib = b.addStaticLibrary("zig-hyperloglog", "src/main.zig");
-    lib.setBuildMode(mode);
-    lib.install();
+    const lib = b.addStaticLibrary(.{
+        .name = "hyperloglog",
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = root_source_file,
+    });
 
-    var main_tests = b.addTest("src/main.zig");
-    main_tests.setBuildMode(mode);
+    b.installArtifact(lib);
 
-    const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&main_tests.step);
+    const tests_step = b.step("test", "Run tests");
+
+    const tests = b.addTest(.{
+        .target = target,
+        .root_source_file = root_source_file,
+    });
+
+    const tests_run = b.addRunArtifact(tests);
+    tests_step.dependOn(&tests_run.step);
+    b.default_step.dependOn(tests_step);
 }

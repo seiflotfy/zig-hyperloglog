@@ -70,8 +70,8 @@ pub fn HyperLogLog(comptime p: u8) type {
         }
 
         fn add_to_dense(self: *Self, x: u64) !void {
-            var k = x >> max;
-            var val = @as(u6, @intCast(@clz((x << p) ^ maxx))) + 1;
+            const k = x >> max;
+            const val = @as(u6, @intCast(@clz((x << p) ^ maxx))) + 1;
             if (val > self.dense[k]) {
                 self.dense[k] = val;
             }
@@ -103,7 +103,7 @@ pub fn HyperLogLog(comptime p: u8) type {
             const m_float = @as(f64, @floatFromInt(m));
 
             const beta_value: f64 = beta(p, z);
-            var est = alpha(p) * m_float * (m_float - z) / (beta_value + sum);
+            const est = alpha(p) * m_float * (m_float - z) / (beta_value + sum);
 
             return @as(u64, @intFromFloat(est + 0.5));
         }
@@ -113,7 +113,7 @@ pub fn HyperLogLog(comptime p: u8) type {
             if (other.is_sparse) {
                 var itr = other.set.set.iterator();
                 while (itr.next()) |x| {
-                    var val: u64 = x.key_ptr.*;
+                    const val: u64 = x.key_ptr.*;
                     try self.add_hashed(val);
                 }
                 return;
@@ -146,7 +146,7 @@ pub fn HyperLogLog(comptime p: u8) type {
 // ======== TESTS ========
 
 const testing = std.testing;
-const RndGen = std.rand.DefaultPrng;
+const RndGen = std.Random.DefaultPrng;
 const autoHash = std.hash.autoHash;
 const Wyhash = std.hash.Wyhash;
 const tolerated_err = 0.008;
@@ -183,7 +183,7 @@ test "add sparse" {
 
     var i: u64 = 0;
     while (i < sparse_threshold) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll.add_hashed(hash);
     }
 
@@ -202,10 +202,10 @@ test "add dense p = 14" {
 
     var i: u64 = 0;
     while (i < sparse_threshold + 1) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll.add_hashed(hash);
     }
-    var est_err = estimateError(hll.cardinality(), sparse_threshold + 1);
+    const est_err = estimateError(hll.cardinality(), sparse_threshold + 1);
 
     try testing.expect(!hll.is_sparse);
     try testing.expect(hll.set.len() == 0);
@@ -223,10 +223,10 @@ test "add dense p = 16" {
 
     var i: u64 = 0;
     while (i < sparse_threshold + 1) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll.add_hashed(hash);
     }
-    var est_err = estimateError(hll.cardinality(), sparse_threshold + 1);
+    const est_err = estimateError(hll.cardinality(), sparse_threshold + 1);
 
     try testing.expect(!hll.is_sparse);
     try testing.expect(hll.set.len() == 0);
@@ -245,7 +245,7 @@ test "merge sparse same" {
 
     var i: u64 = 0;
     while (i < 10) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll1.add_hashed(hash);
         try hll2.add_hashed(hash);
     }
@@ -294,17 +294,17 @@ test "merge sparse into dense" {
 
     var i: u64 = 0;
     while (i < 1e6) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll1.add_hashed(hash);
     }
     i = 0;
     while (i < 1e3) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll2.add_hashed(hash);
     }
 
     try hll1.merge(&hll2);
-    var est_err = estimateError(hll1.cardinality(), 1e6 + 1e3);
+    const est_err = estimateError(hll1.cardinality(), 1e6 + 1e3);
 
     try testing.expect(!hll1.is_sparse);
     try testing.expect(hll1.dense.len == m);
@@ -323,17 +323,17 @@ test "merge dense into sparse" {
 
     var i: u64 = 0;
     while (i < 1e6) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll1.add_hashed(hash);
     }
     i = 0;
     while (i < 1e3) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll2.add_hashed(hash);
     }
 
     try hll2.merge(&hll1);
-    var est_err = estimateError(hll1.cardinality(), 1e6 + 1e3);
+    const est_err = estimateError(hll1.cardinality(), 1e6 + 1e3);
 
     try testing.expect(!hll1.is_sparse);
     try testing.expect(!hll2.is_sparse);
@@ -354,13 +354,13 @@ test "merge dense same" {
 
     var i: u64 = 0;
     while (i < sparse_threshold + 1) : (i += 1) {
-        var hash = rnd.random().int(u64);
+        const hash = rnd.random().int(u64);
         try hll1.add_hashed(hash);
         try hll2.add_hashed(hash);
     }
 
     try hll1.merge(&hll2);
-    var est_err = estimateError(hll1.cardinality(), sparse_threshold + 1);
+    const est_err = estimateError(hll1.cardinality(), sparse_threshold + 1);
 
     try testing.expect(!hll1.is_sparse);
     try testing.expect(hll1.dense.len == m);
@@ -387,7 +387,7 @@ test "merge dense different" {
     }
 
     try hll1.merge(&hll2);
-    var est_err = estimateError(hll1.cardinality(), 2 * sparse_threshold + 2);
+    const est_err = estimateError(hll1.cardinality(), 2 * sparse_threshold + 2);
 
     try testing.expect(!hll1.is_sparse);
     try testing.expect(hll1.dense.len == m);
