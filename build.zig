@@ -5,6 +5,8 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const root_source_file = b.path("src/main.zig");
 
+    _ = b.addModule("hyperloglog", .{ .root_source_file = root_source_file });
+
     const lib = b.addStaticLibrary(.{
         .name = "hyperloglog",
         .target = target,
